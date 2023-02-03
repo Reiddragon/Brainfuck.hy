@@ -1,8 +1,7 @@
-(import sys [argv])
+(import sys [argv stdin stdin])
 
 
 (setv program []
-      buffer []
       stack []
       data (lfor i (range 30000) 0)
       instruction 0
@@ -15,14 +14,6 @@
       (program.append instr)))
   (sauce.close))
 
-(defn readchar []
-  (global buffer)
-  (while (not buffer)
-    (try
-      (+= buffer (list (input)))
-      (except [EOFError])))
-  (return (buffer.pop 0)))
-
 (defn run []
   (global instruction
           data-pointer)
@@ -33,7 +24,7 @@
       "<" (setv data-pointer (% (+ data-pointer 1) 30000))
       ">" (setv data-pointer (% (- data-pointer 1) 30000))
       "." (print (chr (get data data-pointer)) :end "")
-      "," (setv (get data data-pointer) (ord (readchar)))
+      "," (setv (get data data-pointer) (ord (stdin.read 1)))
       "[" (if (get data data-pointer)
             (stack.append instruction)
             (do
