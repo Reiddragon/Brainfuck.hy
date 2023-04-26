@@ -1,50 +1,47 @@
-(import sys [argv stdin stdin])
+#!/usr/bin/env hy
+(import sys [argv stdin stdout])
 
-
-(setv program []
-      stack []
-      data (lfor i (range 30000) 0)
-      instruction 0
+(setv data (* [0] 30000)
       data-pointer 0)
 
 (defn load [path]
-  (setv sauce (open path))
-  (for [instr (sauce.read)]
-    (if (in instr ["+" "-" "<" ">" "." "," "[" "]"])
-      (program.append instr)))
-  (sauce.close))
+  (with [file (open path)]
+    (lfor instr (.read file)
+                 :if (in instr ["+" "-" "<" ">" "." "," "[" "]"]) instr)))
 
-(defn run []
-  (global instruction
-          data-pointer)
-  (while (<= instruction (len program))
-    (match (get program instruction)
-      "+" (setv (get data data-pointer) (% (+ (get data data-pointer) 1) 256))
-      "-" (setv (get data data-pointer) (% (- (get data data-pointer) 1) 256))
-      "<" (setv data-pointer (% (+ data-pointer 1) 30000))
-      ">" (setv data-pointer (% (- data-pointer 1) 30000))
-      "." (print (chr (get data data-pointer)) :end "")
-      "," (setv (get data data-pointer) (ord (stdin.read 1)))
-      "[" (if (get data data-pointer)
-            (stack.append instruction)
-            (do
-              (setv s 1)
-              (while s
-                (+= instruction 1)
-                (+= s (match (get program instruction)
-                        "["  1
-                        "]" -1)))))
-      "]" (setv instruction (- 1 (stack.pop))))
-    (+= instruction 1)))
+(defn comp [code]
+  (let [prog []]
+    (while (len code)
+      (match (setx instr (.pop code 0))
+        "[" (prog.append (comp code))
+        "]" (break)
+        _ (prog.append instr)))
+
+    (return (tuple prog))))
+
+(defn run [code]
+  (global data-pointer)
+  (for [instr code]
+    (cond
+      (= (type instr) str)
+      (match instr
+        "+" (setv (get data data-pointer) (% (+ (get data data-pointer) 1) 256))
+        "-" (setv (get data data-pointer) (% (- (get data data-pointer) 1) 256))
+        "<" (setv data-pointer (% (- data-pointer 1) 30000))
+        ">" (setv data-pointer (% (+ data-pointer 1) 30000))
+        "." (stdout.write (chr (get data data-pointer)))
+        "," (setv (get data data-pointer) (ord (stdin.read 1))))
+
+      (= (type instr) tuple)
+      (while (!= 0 (get data data-pointer))
+        (run instr)))))
 
 (defn main []
   (if (> (len argv) 1)
-    (load (get argv 1))
+    (run (comp (load (get argv 1))))
     (do
       (print "Please provide a brainfuck source file")
-      (quit 1)))
-  (run))
+      (quit 1))))
 
-
-(if (= __name__ "__main__")
+(when (= __name__ "__main__")
   (main))
