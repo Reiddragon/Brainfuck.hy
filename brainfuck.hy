@@ -11,7 +11,8 @@
                  :if (in instr ["+" "-" "<" ">" "." "," "[" "]"]) instr)))
 
 ;; This compiles the code to a tree structure
-;; The way it works is it slowly consumes the flat instruction list `load` returns, making sure it doesn't end up interpreting an instruction twice
+;; The way it works is it slowly consumes the flat instruction list `load`
+;; returns, making sure it doesn't end up interpreting an instruction twice
 ;; This only really works because Python lists are pass-by-reference
 ;; Every time it reaches a `[` it creates a nested list, and every time it hits
 ;; a `]` it breaks out of it
